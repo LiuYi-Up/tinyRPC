@@ -11,7 +11,7 @@
 #define DEBUGLOG(str, ...) \
     if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() && tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Debug){ \
         std::string debug_msg = (new tinyrpc::LogEvent(tinyrpc::LogLevel::Debug))->toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
-        debug_msg += "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
+        debug_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
         tinyrpc::Logger::GetGlobalLogger()->pushLog(debug_msg); \
         tinyrpc::Logger::GetGlobalLogger()->log(); \
     } \
@@ -19,7 +19,7 @@
 #define INFOLOG(str, ...) \
     if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Info){ \
         std::string info_msg = (new tinyrpc::LogEvent(tinyrpc::LogLevel::Info))->toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
-        info_msg += "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
+        info_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
         tinyrpc::Logger::GetGlobalLogger()->pushLog(info_msg); \
         tinyrpc::Logger::GetGlobalLogger()->log(); \
     } \
@@ -28,7 +28,7 @@
 #define ERRORLOG(str, ...) \
     if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Error){ \
         std::string error_msg = (new tinyrpc::LogEvent(tinyrpc::LogLevel::Error))->toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
-        error_msg += "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
+        error_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
         tinyrpc::Logger::GetGlobalLogger()->pushLog(error_msg); \
         tinyrpc::Logger::GetGlobalLogger()->log(); \
     } \

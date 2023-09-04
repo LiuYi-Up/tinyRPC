@@ -1,5 +1,5 @@
-#ifndef TINYRPC_COMMON_CONFIG
-#define TINYRPC_COMMON_CONFIG
+#ifndef TINYRPC_COMMON_CONFIG_H
+#define TINYRPC_COMMON_CONFIG_H
 
 #include <map>
 #include <string>

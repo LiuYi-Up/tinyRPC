@@ -101,7 +101,7 @@ void Logger::pushLog(const std::string& msg){
 void Logger::log(){
 
     ScoprMutex<Mutex> lock(m_mutex);
-    std::queue<std::string> tmp = m_buffer;
+    std::queue<std::string> tmp;
     m_buffer.swap(tmp);
     lock.unlock();
 
