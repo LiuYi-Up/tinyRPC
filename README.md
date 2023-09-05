@@ -129,3 +129,11 @@ onTimer()  // 发生了 I/O事件后，需要执行的方法
 
 reserArriveTime()
 ```
+
+## IOThread
+IOThread:创建子线程完成eventloop
+```
+
+```
+
+IOThreadGroup:管理多个IO线程，类似线程池
