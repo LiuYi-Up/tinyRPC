@@ -20,7 +20,7 @@ pid_t getThreadId(){
     return syscall(SYS_gettid);
 }
 
-int64_t getNomMs(){
+int64_t getNowMs(){
     timeval val;
     gettimeofday(&val, NULL);
 

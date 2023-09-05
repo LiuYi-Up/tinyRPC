@@ -14,6 +14,7 @@ public:
         OUT_EVENT = EPOLLOUT  // 触发写事件
     };
 
+    FdEvent(){};
     FdEvent(int fd);
 
     ~FdEvent();

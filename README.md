@@ -68,3 +68,64 @@ Logger:
 ```
 
 ## EventLoop开发
+EventLoop模块:
+```
+while(1){
+
+    // 从已经有事件触发的
+    while(!m_tasks.empty()){
+        task = m_tasks.front();
+        m_tasks.pop();
+        if(task != nullptr){
+            task();
+        }
+    }
+
+    int rt = epoll_wait(epfd, fds, ..., time_out);
+    if(rt < 0){
+        // epoll wait调用失败
+    }
+    else{
+        // 将有事件触发的句柄添加到任务队列中
+        foreach(fd : fds){
+            task.push(fd);
+        }
+    }
+}
+```
+
+其中所有文件句柄通过`FdEvent`管理:
+```
+1. m_fd  // 文件句柄
+2. m_listen_event  // 监听的epoll 事件
+3. handle return callback function  // 返回还事件的回调函数
+4. trigger epoll event: EPOLLIN, EPOLLOUT  // 事件的类型，刻度或可写
+5. return fd or event  // 返回文件句柄或epoll 事件
+```
+
+Reactor？？？？
+
+
+## TimerEvent定时任务
+```
+1. 指定任务发生的时间点 arrive_time
+2. interval，单位ms
+3. is_repeated  // 是否重复性发生
+4. is_cancled  // 是否已经关闭该任务
+5. task  // 要执行的任务
+
+
+cancle()
+cancleRepeated()
+```
+
+通过 Timer 管理，Timer 继承 FdEvent, 将TimerEvent也注册到 epoll 里，使得时间事件能够及时执行，避免因 epoll wait 阻塞而没有及时发现时间任务:
+```
+multimap<arrivetime, TimerEvent>  // Timer Event 集合
+
+addTimerEvent()  // 添加定时任务
+deleteTimerEvent()  // 删除定时任务
+onTimer()  // 发生了 I/O事件后，需要执行的方法
+
+reserArriveTime()
+```

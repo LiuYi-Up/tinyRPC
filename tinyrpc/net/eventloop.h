@@ -8,6 +8,8 @@
 #include "tinyrpc/common/mutex.h"
 #include "tinyrpc/net/fd_event.h"
 #include "tinyrpc/net/wakeup_fd_event.h"
+#include "tinyrpc/net/timer.h"
+#include "tinyrpc/net/timer_event.h"
 
 
 namespace tinyrpc{
@@ -31,9 +33,12 @@ public:
 
     void addTask(std::function<void()> cb, bool is_wakeup=false);  // 将任务添加到队列里
 
+    void addTimerEvent(TimerEvent::s_ptr event);
+
 private:
     void dealwakeup();
     void initWakeupFdEvent();
+    void initTimer();
     
 private:
     
@@ -42,6 +47,8 @@ private:
     
     int m_wakeup_fd {0};  // 负责监听任务？？？
     WakeupFdEvent* m_wakeup_fd_event {nullptr};
+
+    Timer* m_timer {nullptr};
 
     bool m_is_stop {false};
     

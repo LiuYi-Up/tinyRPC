@@ -58,6 +58,7 @@ EventLoop::EventLoop(){
     // 创建并初始化 wakeup fd && wakeup fd event
     // 将 wakeup fd 添加到 epoll fd 中
     initWakeupFdEvent();
+    initTimer();
     
     INFOLOG("succ create event loop in thread %d", m_pid);
     t_current_eventloop = this;
@@ -80,6 +81,16 @@ void EventLoop::initWakeupFdEvent(){
     });
     addEpollEvent(m_wakeup_fd_event);
     
+}
+
+void EventLoop::initTimer(){
+    m_timer = new Timer();
+
+    DEBUGLOG("m_timer fd [%d]", m_timer->getFd());
+
+    addEpollEvent(m_timer);
+
+    DEBUGLOG("success init Timer.");
 }
 
 void EventLoop::loop(){
@@ -144,6 +155,11 @@ EventLoop::~EventLoop(){
         delete m_wakeup_fd_event;
         m_wakeup_fd_event = nullptr;
     }
+
+    if(m_timer){
+        delete m_timer;
+        m_timer = nullptr;
+    }
 }
 
 void EventLoop::addEpollEvent(FdEvent* event){
@@ -162,6 +178,11 @@ void EventLoop::addEpollEvent(FdEvent* event){
         addTask(cb, true);
     }
 }
+
+void EventLoop::addTimerEvent(TimerEvent::s_ptr event){
+    m_timer->addTimerEvent(event);
+}
+
     
 void EventLoop::deleteEpollEvent(FdEvent* event){
     /*
