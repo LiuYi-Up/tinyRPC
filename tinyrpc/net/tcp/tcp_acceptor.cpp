@@ -54,19 +54,24 @@ int TcpAcceptor::accept(){
         memset(&client_addr, 0, sizeof(client_addr));
 
         socklen_t client_addr_len = sizeof(client_addr);
-        int client_fd = ::accept(m_listen_fd, reinterpret_cast<sockaddr*>(&client_addr, client_addr_len));
+        int client_fd = ::accept(m_listen_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_addr_len);
         if(client_fd < 0){
             ERRORLOG("accept error, errno=%d, error=%s", errno, strerror(errno));
         }
 
         IPNetAddr peer_addr(client_addr);
-        INFOLOG("a client have accept succ, peer addr [%s]", peer_addr.toString());
+        INFOLOG("a client have accept succ, peer addr [%s]", peer_addr.toString().c_str());
 
         return client_fd;
     }
     else{
         // ...
+        return -1;
     }
+}
+
+int TcpAcceptor::getListenFd(){
+    return m_listen_fd;
 }
 
 

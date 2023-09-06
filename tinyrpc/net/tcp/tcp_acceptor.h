@@ -1,7 +1,7 @@
 #ifndef TINYRPC_NET_TCP_TCP_ACCEPTOR_H
 #define TINYRPC_NET_TCP_TCP_ACCEPTOR_H
 
-
+#include <memory>
 #include "tinyrpc/net/tcp/net_addr.h"
 
 namespace tinyrpc{
@@ -9,10 +9,14 @@ namespace tinyrpc{
 
 class TcpAcceptor{
 public:
+    typedef std::shared_ptr<TcpAcceptor> s_ptr;
+
     TcpAcceptor(NetAddr::s_ptr addr);
     ~TcpAcceptor();
 
     int accept();
+
+    int getListenFd();
 
 private:
     NetAddr::s_ptr m_local_addr;  // 服务端监听的地址

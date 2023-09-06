@@ -220,4 +220,13 @@ bool EventLoop::isInLoopThread(){
     return getThreadId() == m_pid;
 }
 
+
+EventLoop* EventLoop::getCurEventLoop(){
+    if(t_current_eventloop){
+        return t_current_eventloop;
+    }
+
+    t_current_eventloop = new EventLoop();
+    return t_current_eventloop;
+}
 }
