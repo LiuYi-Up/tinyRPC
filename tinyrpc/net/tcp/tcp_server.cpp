@@ -16,7 +16,20 @@ TcpServer::TcpServer(NetAddr::s_ptr addr)
 }
 
 TcpServer::~TcpServer(){
+    if(m_main_event_loop){
+        delete m_main_event_loop;
+        m_main_event_loop = nullptr;
+    }
 
+    if(m_io_thread_groups){
+        delete m_io_thread_groups;
+        m_io_thread_groups = nullptr;
+    }
+
+    if(m_listen_fd_event){
+        delete m_listen_fd_event;
+        m_listen_fd_event = nullptr;
+    }
 }
 
 void TcpServer::init(){
