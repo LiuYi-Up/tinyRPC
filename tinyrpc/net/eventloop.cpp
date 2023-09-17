@@ -43,7 +43,8 @@ static thread_local EventLoop* t_current_eventloop = nullptr;
 static int g_epoll_max_timeout = 10000;
 static int g_epoll_max_events = 10;  // 最大监听数量
 
-EventLoop::EventLoop(){
+EventLoop::EventLoop()
+:m_is_looping(false){
     if(t_current_eventloop != nullptr){
         ERRORLOG("failed to event loop, tgis thread has created event loop.");
         exit(0);
@@ -97,6 +98,7 @@ void EventLoop::initTimer(){
 }
 
 void EventLoop::loop(){
+    m_is_looping = true;
     while(!m_is_stop){
         ScoprMutex<Mutex> lock(m_mutex);
         std::queue<std::function<void()>> tmp_tasks;
@@ -231,5 +233,9 @@ EventLoop* EventLoop::getCurEventLoop(){
 
     t_current_eventloop = new EventLoop();
     return t_current_eventloop;
+}
+
+bool EventLoop::isLooping(){
+    return m_is_looping;
 }
 }

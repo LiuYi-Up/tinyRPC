@@ -8,7 +8,7 @@
 #include "tinyrpc/common/log.h"
 #include "tinyrpc/common/config.h"
 #include "tinyrpc/net/tcp/tcp_server.h"
-
+#include "tinyrpc/net/tcp/tcp_client.h"
 
 void test(){
 
@@ -42,10 +42,18 @@ void test(){
 
 }
 
+void test_client(){
+    tinyrpc::IPNetAddr::s_ptr addr = std::make_shared<tinyrpc::IPNetAddr>("127.0.0.1", 12344);
+    tinyrpc::TcpClient client(addr);
+    client.connection([addr](){
+        DEBUGLOG("test success connect [%s]", addr->toString().c_str())
+    });
+}
+
 int main(){
     tinyrpc::Config::SetGlobalConfig("./conf/tinyrpc.xml");
     tinyrpc::Logger::InitGlobalLogger();
 
-    test();
+    test_client();
     return 0;
 }

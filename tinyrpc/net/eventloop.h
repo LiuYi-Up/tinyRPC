@@ -35,6 +35,8 @@ public:
 
     void addTimerEvent(TimerEvent::s_ptr event);
 
+    bool isLooping();
+
 public:
     static EventLoop* getCurEventLoop();
 
@@ -60,6 +62,8 @@ private:
     std::queue<std::function<void()>> m_pending_tasks;
     
     Mutex m_mutex;
+
+    bool m_is_looping {false};
 
 };
 

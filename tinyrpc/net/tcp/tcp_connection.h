@@ -9,17 +9,22 @@
 namespace tinyrpc{
 
 enum TcpState{
-        NotConnected = 1,
-        Connected = 2,
-        HalfClosing = 3,
-        Closed = 4
+    NotConnected = 1,
+    Connected = 2,
+    HalfClosing = 3,
+    Closed = 4
+};
+
+enum TcpConnectionType{
+    TcpConnectionByServer = 1,
+    TcpConnectionByClient = 2
 };
 
 class TcpConnection{
 public:
     typedef std::shared_ptr<TcpConnection> s_ptr;
 
-    TcpConnection(IOThread* io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
+    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
     ~TcpConnection();
     
     void onRead();
@@ -36,8 +41,10 @@ public:
 
     void shutdown();
     
+    void setTcpConnectionType(TcpConnectionType type);
+
 private:
-    IOThread* m_io_thread {nullptr};  // 代表持有该连接的 IO 线程
+    // IOThread* m_io_thread {nullptr};  // 代表持有该连接的 IO 线程
 
     FdEvent* m_fd_event {nullptr};
 
@@ -51,6 +58,10 @@ private:
     TCPBuffer::s_ptr m_out_buffer;
 
     TcpState m_state;
+
+    EventLoop* m_event_loop;
+
+    TcpConnectionType m_connection_type {TcpConnectionByServer};
 
 };
 

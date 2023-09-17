@@ -6,8 +6,8 @@
 namespace tinyrpc{
 
 
-TcpConnection::TcpConnection(IOThread* io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr)
-:m_io_thread(io_thread), m_fd(fd), m_buffer_size(buffer_size) , m_peer_addr(peer_addr), m_state(NotConnected){
+TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr)
+:m_event_loop(event_loop), m_fd(fd), m_buffer_size(buffer_size) , m_peer_addr(peer_addr), m_state(NotConnected){
     m_in_buffer = std::make_shared<TCPBuffer>(m_buffer_size);
     m_out_buffer = std::make_shared<TCPBuffer>(m_buffer_size);
 
@@ -16,7 +16,7 @@ TcpConnection::TcpConnection(IOThread* io_thread, int fd, int buffer_size, NetAd
     m_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
 
     DEBUGLOG("tcp connection creator fd [%d]", m_fd_event->getFd());
-    m_io_thread->getEventLoop()->addEpollEvent(m_fd_event);
+    m_event_loop->addEpollEvent(m_fd_event);
 }
 
 
@@ -121,7 +121,7 @@ void TcpConnection::onWrite(){
     if(is_write_all){
         m_fd_event->cancle(FdEvent::OUT_EVENT);
         DEBUGLOG("tcp connection execute fd [%d]", m_fd_event->getFd());
-        m_io_thread->getEventLoop()->addEpollEvent(m_fd_event);
+        m_event_loop->addEpollEvent(m_fd_event);
     }
     
 }
@@ -145,7 +145,7 @@ void TcpConnection::excute(){
     m_fd_event->listen(FdEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
 
     DEBUGLOG("tcp connection execute fd [%d]", m_fd_event->getFd());
-    m_io_thread->getEventLoop()->addEpollEvent(m_fd_event);
+    m_event_loop->addEpollEvent(m_fd_event);
 }
 
 void TcpConnection::setState(const TcpState& state){
@@ -164,7 +164,7 @@ void TcpConnection::clear(){
 
     m_fd_event->cancle(FdEvent::IN_EVENT);
     m_fd_event->cancle(FdEvent::OUT_EVENT);
-    m_io_thread->getEventLoop()->deleteEpollEvent(m_fd_event);
+    m_event_loop->deleteEpollEvent(m_fd_event);
     m_state = Closed;
 
 }
@@ -184,5 +184,8 @@ void TcpConnection::shutdown(){
     ::shutdown(m_fd, SHUT_RDWR);
 }
 
+void TcpConnection::setTcpConnectionType(TcpConnectionType type){
+    m_connection_type = type;
+}
 
 }
