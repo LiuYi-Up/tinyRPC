@@ -11,6 +11,7 @@ FdEventGroup* FdEventGroup::GetFdEventGroup(){
     }
 
     g_fd_event_group = new FdEventGroup(128);
+    return g_fd_event_group;
 }
 
 FdEventGroup::FdEventGroup(int size)
@@ -22,7 +23,7 @@ FdEventGroup::FdEventGroup(int size)
 
 
 FdEventGroup::~FdEventGroup(){
-    for(int i = 0; i < m_fd_event_group.size(); ++i){
+    for(size_t i = 0; i < m_fd_event_group.size(); ++i){
         if(m_fd_event_group[i]){
             delete m_fd_event_group[i];
             m_fd_event_group[i] = nullptr;
@@ -34,7 +35,7 @@ FdEventGroup::~FdEventGroup(){
 FdEvent* FdEventGroup::getFdEvent(int fd){
     ScoprMutex<Mutex> lk(m_mutex);
 
-    if(fd < m_fd_event_group.size()){
+    if((size_t) fd < m_fd_event_group.size()){
         return m_fd_event_group[fd];
     }
 

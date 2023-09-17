@@ -8,6 +8,21 @@
 #include "tinyrpc/common/mutex.h"
 
 
+namespace tinyrpc{
+
+template<typename... Args>
+std::string formatString(const char* str, Args&&... args){
+    int size = snprintf(nullptr, 0, str, args...);  //str 格式，args要打印的字符串
+
+    std::string result;
+    if(size > 0){
+        result.resize(size);
+        snprintf(&result[0], size + 1, str, args...);
+    }
+    return result;
+
+}
+
 #define DEBUGLOG(str, ...) \
     if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() && tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Debug){ \
         std::string debug_msg = (new tinyrpc::LogEvent(tinyrpc::LogLevel::Debug))->toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
@@ -33,21 +48,6 @@
         tinyrpc::Logger::GetGlobalLogger()->log(); \
     } \
 
-
-namespace tinyrpc{
-
-template<typename... Args>
-std::string formatString(const char* str, Args&&... args){
-    int size = snprintf(nullptr, 0, str, args...);  //str 格式，args要打印的字符串
-
-    std::string result;
-    if(size > 0){
-        result.resize(size);
-        snprintf(&result[0], size + 1, str, args...);
-    }
-    return result;
-
-}
 
 enum LogLevel{
     Unknown = 0,

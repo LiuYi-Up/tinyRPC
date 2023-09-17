@@ -34,7 +34,7 @@ void IOThreadGroup::join(){
 
 
 IOThread* IOThreadGroup::getIOThread(){
-    if(m_index == (size_t) m_io_thread_groups.size() || m_index == -1){
+    if(m_index == (int) m_io_thread_groups.size() || m_index == -1){
         m_index = 0;
     }
 

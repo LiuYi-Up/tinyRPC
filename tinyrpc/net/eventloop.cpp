@@ -16,8 +16,9 @@
     epoll_event tmp = event->getEpollEvent(); \
     int rt = epoll_ctl(m_epoll_fd, op, event->getFd(), &tmp); \
     if(rt == -1){ \
-        ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno)); \
+        ERRORLOG("failed epoll_ctl when add fd[%d], errno=%d, error=%s", m_epoll_fd, errno, strerror(errno)); \
     } \
+    m_listen_fds.insert(event->getFd()); \
     DEBUGLOG("add event success, fd[%d]", event->getFd()); \
 
 #define DELETE_FROM_EPOLL() \
@@ -31,6 +32,7 @@
     if(rt == -1){ \
         ERRORLOG("failed epoll_ctl when delete fd, errno=%d, error=%s", errno, strerror(errno)); \
     } \
+    m_listen_fds.erase(event->getFd()); \
     DEBUGLOG("delete event success, fd[%d]", event->getFd()); \
 
 
@@ -79,6 +81,7 @@ void EventLoop::initWakeupFdEvent(){
         DEBUGLOG("read full bytes from wakeup fd[%d].", m_wakeup_fd);
 
     });
+    DEBUGLOG("eventloop init wakeup fd [%d]", m_wakeup_fd_event->getFd());
     addEpollEvent(m_wakeup_fd_event);
     
 }
@@ -126,12 +129,12 @@ void EventLoop::loop(){
                 }
 
                 if(trigger_event.events & EPOLLIN){
-                    DEBUGLOG("fd %d trigger in event", fd_event->getFd());
+                    DEBUGLOG("fd %d trigger EPOLLIN event", fd_event->getFd());
                     addTask(fd_event->handler(FdEvent::IN_EVENT));
                 }
 
                 if(trigger_event.events & EPOLLOUT){
-                    DEBUGLOG("fd %d trigger in event", fd_event->getFd());
+                    DEBUGLOG("fd %d trigger EPOLLOUT event", fd_event->getFd());
                     addTask(fd_event->handler(FdEvent::OUT_EVENT));
                 }
 

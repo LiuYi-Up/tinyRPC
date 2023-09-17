@@ -7,7 +7,7 @@
 
 
 void test_tcp_server(){
-    tinyrpc::IPNetAddr::s_ptr addr = std::make_shared<tinyrpc::IPNetAddr>("127.0.0.1", 12345);
+    tinyrpc::IPNetAddr::s_ptr addr = std::make_shared<tinyrpc::IPNetAddr>("127.0.0.1", 12344);
 
     DEBUGLOG("creat addr %s", addr->toString().c_str());
 

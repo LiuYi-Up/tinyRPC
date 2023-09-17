@@ -23,6 +23,8 @@ public:
 
     void listen(TriggerEvent event_type, std::function<void()> callback);
 
+    void cancle(TriggerEvent event_type);
+
     int getFd(){
         return m_fd;
     }
@@ -30,6 +32,8 @@ public:
     epoll_event getEpollEvent(){
         return m_listen_event;
     }
+
+    void setNonblock();
 
 protected:
     int m_fd {-1};  // 当前事务句柄

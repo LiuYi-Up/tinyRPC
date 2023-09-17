@@ -5,7 +5,7 @@
 namespace tinyrpc{
 
 TCPBuffer::TCPBuffer(int size)
-:m_size(size), m_read_index(0), m_write_index(0){
+:m_size(size){
     m_buffer.resize(size);
 }
 

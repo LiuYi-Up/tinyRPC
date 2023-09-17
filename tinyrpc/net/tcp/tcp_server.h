@@ -1,8 +1,11 @@
 #ifndef TINYRPC_NET_TCP_SERVER_H
 #define TINYRPC_NET_TCP_SERVER_H
 
+#include <set>
+
 #include "tinyrpc/net/io_thread_group.h"
 #include "tinyrpc/net/tcp/tcp_acceptor.h"
+#include "tinyrpc/net/tcp/tcp_connection.h"
 #include "tinyrpc/net/tcp/net_addr.h"
 #include "tinyrpc/net/eventloop.h"
 
@@ -33,6 +36,7 @@ private:
 
     int m_client_count {0};
 
+    std::set<TcpConnection::s_ptr> m_client;
 };
 
 

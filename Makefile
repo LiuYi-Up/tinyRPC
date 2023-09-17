@@ -35,9 +35,9 @@ COMM_OBJ := $(patsubst $(PATH_COMM)/%.cpp, $(PATH_OBJ)/%.o, $(wildcard $(PATH_CO
 NET_OBJ := $(patsubst $(PATH_NET)/%.cpp, $(PATH_OBJ)/%.o, $(wildcard $(PATH_NET)/*.cpp))
 TCP_OBJ := $(patsubst $(PATH_TCP)/%.cpp, $(PATH_OBJ)/%.o, $(wildcard $(PATH_TCP)/*.cpp))
 
-ALL_TESTS : $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp
+ALL_TESTS : $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp $(PATH_BIN)/test_client
 
-TEST_CASE_OUT := $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp
+TEST_CASE_OUT := $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp $(PATH_BIN)/test_client
 
 LIB_OUT := $(PATH_LIB)/libtinyrpc.a
 
@@ -49,6 +49,9 @@ $(PATH_BIN)/test_eventloop: $(LIB_OUT)
 
 $(PATH_BIN)/test_tcp: $(LIB_OUT)
 	$(CXX) $(CXXFLAGS) $(PATH_TESTCASES)/test_tcp.cpp -o $@ $(LIB_OUT) $(LIBS) -ldl -pthread
+
+$(PATH_BIN)/test_client: $(LIB_OUT)
+	$(CXX) $(CXXFLAGS) $(PATH_TESTCASES)/test_client.cpp -o $@ $(LIB_OUT) $(LIBS) -ldl -pthread
 
 $(LIB_OUT): $(COMM_OBJ) $(NET_OBJ) $(TCP_OBJ)
 	cd $(PATH_OBJ) && ar rcv libtinyrpc.a *.o && cp libtinyrpc.a ../lib/

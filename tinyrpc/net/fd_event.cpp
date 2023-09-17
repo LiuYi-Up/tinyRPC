@@ -1,4 +1,5 @@
 #include <string.h>
+#include <fcntl.h>
 #include "tinyrpc/net/fd_event.h"
 
 
@@ -34,5 +35,23 @@ void FdEvent::listen(TriggerEvent event_type, std::function<void()> callback){
     m_listen_event.data.ptr = this;
 }
 
+void FdEvent::setNonblock(){
+    int flag = fcntl(m_fd, F_GETFL, 0);
+    if(flag & O_NONBLOCK){
+        return;
+    }
+
+    fcntl(m_fd, F_SETFL, flag | O_NONBLOCK);
+
+}
+
+void FdEvent::cancle(TriggerEvent event_type){
+    if(event_type == TriggerEvent::IN_EVENT){
+        m_listen_event.events &= (~EPOLLIN);
+    }
+    else{
+        m_listen_event.events &= (~EPOLLOUT);
+    }
+}
 
 }
