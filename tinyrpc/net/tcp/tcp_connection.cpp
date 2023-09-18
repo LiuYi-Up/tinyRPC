@@ -1,22 +1,25 @@
 #include <unistd.h>
 #include "tinyrpc/net/tcp/tcp_connection.h"
 #include "tinyrpc/net/fd_event_group.h"
-
+#include "tinyrpc/net/string_coder.h"
 
 namespace tinyrpc{
 
 
-TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr)
-:m_event_loop(event_loop), m_fd(fd), m_buffer_size(buffer_size) , m_peer_addr(peer_addr), m_state(NotConnected){
+TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, TcpConnectionType type /*=TcpConnectionByServer*/)
+:m_event_loop(event_loop), m_fd(fd), m_buffer_size(buffer_size) , m_peer_addr(peer_addr), m_state(NotConnected), m_connection_type(type){
     m_in_buffer = std::make_shared<TCPBuffer>(m_buffer_size);
     m_out_buffer = std::make_shared<TCPBuffer>(m_buffer_size);
 
     m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(m_fd);
     m_fd_event->setNonblock();
-    m_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
-
+    
+    if(m_connection_type == TcpConnectionByServer){
+        listenRead();
+    }
     DEBUGLOG("tcp connection creator fd [%d]", m_fd_event->getFd());
-    m_event_loop->addEpollEvent(m_fd_event);
+    
+    m_coder = new StringCoder();
 }
 
 
@@ -93,6 +96,16 @@ void TcpConnection::onWrite(){
         return;
     }
 
+    if(m_connection_type == TcpConnectionByClient){
+        // 1.将 message encode 得到字节流
+        // 2.将字节流写入 buffer 中，全部发送
+        std::vector<AbstractProtocol::s_ptr> messages;
+        for(size_t i = 0; i < m_write_dones.size(); ++i){
+            messages.push_back(m_write_dones[i].first);
+        }
+        m_coder->encoder(messages, m_out_buffer);
+    }
+
     bool is_write_all = false;
     while (true){
         if(m_out_buffer->readAble() == 0){
@@ -124,28 +137,48 @@ void TcpConnection::onWrite(){
         m_event_loop->addEpollEvent(m_fd_event);
     }
     
+    if(m_connection_type == TcpConnectionByClient){
+        // 执行回调函数
+        for(size_t i = 0; i < m_write_dones.size(); ++i){
+            m_write_dones[i].second(m_write_dones[i].first);
+        }
+        m_write_dones.clear();
+    }
 }
 
 void TcpConnection::excute(){
-    // 将 rpc 请求执行业务逻辑，获取 rpc 响应， 再把 rpc 响应发送出去
-    std::vector<char> tmp;
-    int size = m_in_buffer->readAble();
-    tmp.resize(size);
-    m_in_buffer->readFromBuffer(tmp, size);
+    if(m_connection_type == TcpConnectionByServer){
+        // 将 rpc 请求执行业务逻辑，获取 rpc 响应， 再把 rpc 响应发送出去
+        std::vector<char> tmp;
+        int size = m_in_buffer->readAble();
+        tmp.resize(size);
+        m_in_buffer->readFromBuffer(tmp, size);
 
-    std::string msg;
-    for(size_t i = 0; i < tmp.size(); ++i){
-        msg += tmp[i];
+        std::string msg;
+        for(size_t i = 0; i < tmp.size(); ++i){
+            msg += tmp[i];
+        }
+        INFOLOG("success request [%s] from client[%s]", msg.c_str(), m_peer_addr->toString().c_str());
+
+        // TODO:先直接将原文返回过去， 后面需要执行回调函数， 再将结果写入 buffer 
+        m_out_buffer->writeTOBuffer(msg.c_str(), msg.length());
+
+        listenWrite();
+        DEBUGLOG("tcp connection execute fd [%d]", m_fd_event->getFd());
     }
-    INFOLOG("success request [%s] from client[%s]", msg.c_str(), m_peer_addr->toString().c_str());
+    else{
+        // 从 buffer 中读取字节流构建 message 对象
+        std::vector<AbstractProtocol::s_ptr> results;
+        m_coder->decoder(results, m_in_buffer);
 
-    // TODO:先直接将原文返回过去， 后面需要执行回调函数， 再将结果写入 buffer 
-    m_out_buffer->writeTOBuffer(msg.c_str(), msg.length());
-
-    m_fd_event->listen(FdEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
-
-    DEBUGLOG("tcp connection execute fd [%d]", m_fd_event->getFd());
-    m_event_loop->addEpollEvent(m_fd_event);
+        for(size_t i = 0; i < results.size(); ++i){
+            auto it = m_read_dones.find(results[i]->getReqId());
+            if(it != m_read_dones.end()){
+                it->second(results[i]->shared_from_this());
+            }
+        }
+    }
+    
 }
 
 void TcpConnection::setState(const TcpState& state){
@@ -187,5 +220,26 @@ void TcpConnection::shutdown(){
 void TcpConnection::setTcpConnectionType(TcpConnectionType type){
     m_connection_type = type;
 }
+
+
+void TcpConnection::listenWrite(){
+    m_fd_event->listen(FdEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
+    m_event_loop->addEpollEvent(m_fd_event);
+}
+
+// 监听可读事件
+void TcpConnection::listenRead(){
+    m_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
+    m_event_loop->addEpollEvent(m_fd_event);
+}
+
+void TcpConnection::pushSendMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done){
+    m_write_dones.push_back({message, done});
+}
+
+void TcpConnection::pushReadMessage(const std::string req_id, std::function<void(AbstractProtocol::s_ptr)> done){
+    m_read_dones.insert({req_id, done});
+}
+
 
 }

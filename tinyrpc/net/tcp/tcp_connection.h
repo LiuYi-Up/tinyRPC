@@ -1,10 +1,15 @@
 #ifndef TINYRPC_NET_TCP_TCP_CONNECTION_H
 #define TINYRPC_NET_TCP_TCP_CONNECTION_H
 
+#include <map>
+#include <vector>
+
 #include "tinyrpc/net/tcp/tcp_buffer.h"
 #include "tinyrpc/net/tcp/net_addr.h"
 #include "tinyrpc/net/eventloop.h"
 #include "tinyrpc/net/io_thread.h"
+#include "tinyrpc/net/abstract_protocol.h"
+#include "tinyrpc/net/abstract_coder.h"
 
 namespace tinyrpc{
 
@@ -24,7 +29,7 @@ class TcpConnection{
 public:
     typedef std::shared_ptr<TcpConnection> s_ptr;
 
-    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
+    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, TcpConnectionType type = TcpConnectionByServer);
     ~TcpConnection();
     
     void onRead();
@@ -42,6 +47,16 @@ public:
     void shutdown();
     
     void setTcpConnectionType(TcpConnectionType type);
+
+    // 监听可写事件
+    void listenWrite();
+
+    // 监听可读事件
+    void listenRead();
+
+    void pushSendMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done);
+    
+    void pushReadMessage(const std::string req_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
 private:
     // IOThread* m_io_thread {nullptr};  // 代表持有该连接的 IO 线程
@@ -63,6 +78,10 @@ private:
 
     TcpConnectionType m_connection_type {TcpConnectionByServer};
 
+    std::vector<std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>> m_write_dones;
+    std::map<std::string, std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
+
+    AbstractCoder* m_coder;
 };
 
 }
