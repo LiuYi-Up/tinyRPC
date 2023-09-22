@@ -1,7 +1,9 @@
 #include <unistd.h>
 #include "tinyrpc/net/tcp/tcp_connection.h"
 #include "tinyrpc/net/fd_event_group.h"
-#include "tinyrpc/net/string_coder.h"
+#include "tinyrpc/net/coder/string_coder.h"
+#include "tinyrpc/net/coder/tinypb_coder.h"
+#include "tinyrpc/net/coder/tinypb_protocol.h"
 
 namespace tinyrpc{
 
@@ -19,7 +21,7 @@ TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, Net
     }
     DEBUGLOG("tcp connection creator fd [%d]", m_fd_event->getFd());
     
-    m_coder = new StringCoder();
+    m_coder = new TinyPBCoder();
 }
 
 
@@ -44,12 +46,12 @@ void TcpConnection::onRead(){
         int read_count = m_in_buffer->writeAble();
         int write_index = m_in_buffer->writeIndex();
     
-        int rt = read(m_fd, &m_in_buffer->m_buffer[write_index], read_count);
+        int rt = read(m_fd, &(m_in_buffer->m_buffer[write_index]), read_count);
         DEBUGLOG("success read %d bytes from addr[%s], client fd[%d]", rt, m_peer_addr->toString().c_str(), m_fd);
 
         if(rt > 0){
             m_in_buffer->moveWriteIndex(rt);
-            // 说明有可能还有暑假没读完
+            // 说明有可能还有数据没读完
             if(rt == read_count){
                 continue;
             }
@@ -149,19 +151,19 @@ void TcpConnection::onWrite(){
 void TcpConnection::excute(){
     if(m_connection_type == TcpConnectionByServer){
         // 将 rpc 请求执行业务逻辑，获取 rpc 响应， 再把 rpc 响应发送出去
-        std::vector<char> tmp;
-        int size = m_in_buffer->readAble();
-        tmp.resize(size);
-        m_in_buffer->readFromBuffer(tmp, size);
+        std::vector<AbstractProtocol::s_ptr> result;
+        std::vector<AbstractProtocol::s_ptr> reply_result;
 
-        std::string msg;
-        for(size_t i = 0; i < tmp.size(); ++i){
-            msg += tmp[i];
+        m_coder->decoder(result, m_in_buffer);
+        for(size_t i = 0; i < result.size(); ++i){
+            INFOLOG("success request [%s] from client[%s]", result[i]->m_req_id.c_str(), m_peer_addr->toString().c_str());
+            std::shared_ptr<TinyPBProtocol> respones = std::make_shared<TinyPBProtocol>();
+            respones->m_req_id = result[i]->m_req_id;
+            respones->m_pb_data = "hello. this is tinyrpc response.";
+            reply_result.emplace_back(respones);
         }
-        INFOLOG("success request [%s] from client[%s]", msg.c_str(), m_peer_addr->toString().c_str());
 
-        // TODO:先直接将原文返回过去， 后面需要执行回调函数， 再将结果写入 buffer 
-        m_out_buffer->writeTOBuffer(msg.c_str(), msg.length());
+        m_coder->encoder(reply_result, m_out_buffer);
 
         listenWrite();
         DEBUGLOG("tcp connection execute fd [%d]", m_fd_event->getFd());
@@ -172,9 +174,9 @@ void TcpConnection::excute(){
         m_coder->decoder(results, m_in_buffer);
 
         for(size_t i = 0; i < results.size(); ++i){
-            auto it = m_read_dones.find(results[i]->getReqId());
+            auto it = m_read_dones.find(results[i]->m_req_id);
             if(it != m_read_dones.end()){
-                it->second(results[i]->shared_from_this());
+                it->second(results[i]);
             }
         }
     }

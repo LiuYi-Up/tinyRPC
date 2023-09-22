@@ -1,9 +1,9 @@
-#ifndef TINYRPC_NET_ABSTRACT_CODER_H
-#define TINYRPC_NET_ABSTRACT_CODER_H
+#ifndef TINYRPC_NET_CODER_ABSTRACT_CODER_H
+#define TINYRPC_NET_CODER_ABSTRACT_CODER_H
 
 #include <vector>
 
-#include "tinyrpc/net/abstract_protocol.h"
+#include "tinyrpc/net/coder/abstract_protocol.h"
 #include "tinyrpc/net/tcp/tcp_buffer.h"
 
 namespace tinyrpc{

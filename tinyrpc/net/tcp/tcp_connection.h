@@ -8,8 +8,8 @@
 #include "tinyrpc/net/tcp/net_addr.h"
 #include "tinyrpc/net/eventloop.h"
 #include "tinyrpc/net/io_thread.h"
-#include "tinyrpc/net/abstract_protocol.h"
-#include "tinyrpc/net/abstract_coder.h"
+#include "tinyrpc/net/coder/abstract_protocol.h"
+#include "tinyrpc/net/coder/abstract_coder.h"
 
 namespace tinyrpc{
 
@@ -60,6 +60,7 @@ public:
 
 private:
     // IOThread* m_io_thread {nullptr};  // 代表持有该连接的 IO 线程
+    EventLoop* m_event_loop;
 
     FdEvent* m_fd_event {nullptr};
 
@@ -74,7 +75,6 @@ private:
 
     TcpState m_state;
 
-    EventLoop* m_event_loop;
 
     TcpConnectionType m_connection_type {TcpConnectionByServer};
 

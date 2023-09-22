@@ -1,12 +1,12 @@
-#ifndef TINYRPC_NET_STRING_CODER_H
-#define TINYRPC_NET_STRING_CODER_H
+#ifndef TINYRPC_NET_CODER_STRING_CODER_H
+#define TINYRPC_NET_CODER_STRING_CODER_H
 
-#include "tinyrpc/net/abstract_coder.h"
-#include "tinyrpc/net/abstract_protocol.h"
+#include "tinyrpc/net/coder/abstract_coder.h"
+#include "tinyrpc/net/coder/abstract_protocol.h"
 
 namespace tinyrpc{
 
-class StringProtocol: public AbstractProtocol{
+struct StringProtocol: public AbstractProtocol{
 public:
     std::string m_info;
 
@@ -32,7 +32,7 @@ public:
         }
 
         std::shared_ptr<StringProtocol> msg = std::make_shared<StringProtocol>();
-        msg->setReqId("12345");
+        msg->m_req_id = "12345";
         msg->m_info = info;
         out_message.push_back(msg);
         

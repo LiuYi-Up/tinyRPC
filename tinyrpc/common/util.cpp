@@ -1,6 +1,8 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <string>
+#include <string.h>
+#include <arpa/inet.h>
 
 #include "tinyrpc/common/util.h"
 
@@ -27,5 +29,10 @@ int64_t getNowMs(){
     return val.tv_sec * 1000 + val.tv_sec / 1000;
 }
 
+int getInt32FromNetByte(const char* buf){
+    int re;
+    memcpy(&re, buf, sizeof(re));
+    return ntohl(re);
+}
 
 }
