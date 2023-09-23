@@ -4,12 +4,13 @@
 #include "tinyrpc/net/coder/string_coder.h"
 #include "tinyrpc/net/coder/tinypb_coder.h"
 #include "tinyrpc/net/coder/tinypb_protocol.h"
+#include "tinyrpc/net/rpc/rpc_dispatcher.h"
 
 namespace tinyrpc{
 
 
-TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, TcpConnectionType type /*=TcpConnectionByServer*/)
-:m_event_loop(event_loop), m_fd(fd), m_buffer_size(buffer_size) , m_peer_addr(peer_addr), m_state(NotConnected), m_connection_type(type){
+TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr local_addr, NetAddr::s_ptr peer_addr, TcpConnectionType type /*=TcpConnectionByServer*/)
+:m_event_loop(event_loop), m_fd(fd), m_buffer_size(buffer_size) , m_local_addr(local_addr), m_peer_addr(peer_addr), m_state(NotConnected), m_connection_type(type){
     m_in_buffer = std::make_shared<TCPBuffer>(m_buffer_size);
     m_out_buffer = std::make_shared<TCPBuffer>(m_buffer_size);
 
@@ -158,8 +159,9 @@ void TcpConnection::excute(){
         for(size_t i = 0; i < result.size(); ++i){
             INFOLOG("success request [%s] from client[%s]", result[i]->m_req_id.c_str(), m_peer_addr->toString().c_str());
             std::shared_ptr<TinyPBProtocol> respones = std::make_shared<TinyPBProtocol>();
-            respones->m_req_id = result[i]->m_req_id;
-            respones->m_pb_data = "hello. this is tinyrpc response.";
+            // respones->m_req_id = result[i]->m_req_id;
+            // respones->m_pb_data = "hello. this is tinyrpc response.";
+            tinyrpc::RpcDispatcher::GetGlobalRpcDispatcher()->dispatch(result[i], respones, this);
             reply_result.emplace_back(respones);
         }
 
@@ -243,5 +245,11 @@ void TcpConnection::pushReadMessage(const std::string req_id, std::function<void
     m_read_dones.insert({req_id, done});
 }
 
+NetAddr::s_ptr TcpConnection::getLocalAddr(){
+    return m_local_addr;
+}
 
+NetAddr::s_ptr TcpConnection::getPeerAddr(){
+    return m_peer_addr;
+}
 }

@@ -137,3 +137,25 @@ IOThread:创建子线程完成eventloop
 ```
 
 IOThreadGroup:管理多个IO线程，类似线程池
+
+## NetAddr
+
+## TcpBuffer
+
+## TcpConnection
+
+## TcpAcceptor
+
+## TcpServer & TcpClient
+
+## Coder & Protocol
+
+## RPC 服务端流程
+```
+服务端启动时就注册一个 OrderService 对象，用于管理请求号对应的 RPC 服务。
+1. 从 buffer 中读取字节流 decoder 出 TinyPBProtocol 对象，从而得到 method_name。通过 OrderService 对象从 service 中找到对应 method_name 的响应方法 func；
+2. 找到对应的 request type 和 response type；
+3. 将请求体 TinyPBProtocol 里面的 pb_data 反序列化为 request type 的一个对象，同时实例化一个 response type的对象；
+4. 执行 func(request, response)；
+5. 将 response 对象序列化为 pb_data，塞到 TinyPBProtocol 对象中，通过 encoder 转为字节流后写入到 buffer 中，发送回客户端。
+```

@@ -29,7 +29,7 @@ class TcpConnection{
 public:
     typedef std::shared_ptr<TcpConnection> s_ptr;
 
-    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, TcpConnectionType type = TcpConnectionByServer);
+    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr local_addr, NetAddr::s_ptr peer_addr, TcpConnectionType type = TcpConnectionByServer);
     ~TcpConnection();
     
     void onRead();
@@ -58,6 +58,9 @@ public:
     
     void pushReadMessage(const std::string req_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
+    NetAddr::s_ptr getLocalAddr();
+
+    NetAddr::s_ptr getPeerAddr();
 private:
     // IOThread* m_io_thread {nullptr};  // 代表持有该连接的 IO 线程
     EventLoop* m_event_loop;
@@ -82,6 +85,7 @@ private:
     std::map<std::string, std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
 
     AbstractCoder* m_coder;
+
 };
 
 }
