@@ -52,7 +52,7 @@ void test_client(){
     client.connection([addr, &client](){
         DEBUGLOG("test success connect [%s]", addr->toString().c_str());
         std::shared_ptr<tinyrpc::TinyPBProtocol> message = std::make_shared<tinyrpc::TinyPBProtocol>();
-        message->m_req_id = "666666";
+        message->m_msg_id = "666666";
         message->m_pb_data = "tiny_pb tiny_pb!";
         client.writeMessage(message, [](tinyrpc::AbstractProtocol::s_ptr msg){
             DEBUGLOG("success send req.");
@@ -60,7 +60,7 @@ void test_client(){
 
         client.readMessage("666666", [](tinyrpc::AbstractProtocol::s_ptr msg_ptr){
             std::shared_ptr<tinyrpc::TinyPBProtocol> msg = std::dynamic_pointer_cast<tinyrpc::TinyPBProtocol>(msg_ptr);
-            DEBUGLOG("success get respose req_id[%s], response message[%s]", msg->m_req_id.c_str(), msg->m_pb_data.c_str());
+            DEBUGLOG("success get respose msg_id[%s], response message[%s]", msg->m_msg_id.c_str(), msg->m_pb_data.c_str());
         });
 
         client.writeMessage(message, [](tinyrpc::AbstractProtocol::s_ptr msg){
@@ -69,7 +69,7 @@ void test_client(){
 
         client.readMessage("666666", [](tinyrpc::AbstractProtocol::s_ptr msg_ptr){
             std::shared_ptr<tinyrpc::TinyPBProtocol> msg = std::dynamic_pointer_cast<tinyrpc::TinyPBProtocol>(msg_ptr);
-            DEBUGLOG("success get respose req_id[%s], response message[%s]", msg->m_req_id.c_str(), msg->m_pb_data.c_str());
+            DEBUGLOG("success get respose msg_id[%s], response message[%s]", msg->m_msg_id.c_str(), msg->m_pb_data.c_str());
         });
     });
 }

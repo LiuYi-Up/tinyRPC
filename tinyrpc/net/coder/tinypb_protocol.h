@@ -15,8 +15,8 @@ public:
 
 public:
     int32_t m_pk_len {0}; // 整个包长度，包括前后分隔符
-    int32_t m_req_id_len {0}; // 请求号的长度
-    // req_id 继承自父类
+    int32_t m_msg_id_len {0}; // 请求号的长度
+    // msg_id 继承自父类
 
     int32_t m_method_name_len {0};  // 请求方法名长度
     std::string m_method_name;  // 请求方法名

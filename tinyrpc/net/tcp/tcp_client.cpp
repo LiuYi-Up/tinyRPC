@@ -91,10 +91,10 @@ void TcpClient::writeMessage(AbstractProtocol::s_ptr message, std::function<void
 
 // 异步读取 message
 // 读取成功，将执行 done 函数，函数入参为 message
-void TcpClient::readMessage(const std::string req_id, std::function<void(AbstractProtocol::s_ptr)> done){
+void TcpClient::readMessage(const std::string msg_id, std::function<void(AbstractProtocol::s_ptr)> done){
     // 1.监听可读事件
     // 2.从 buffer 中读取字节流构建 message 对象
-    m_connection->pushReadMessage(req_id, done);
+    m_connection->pushReadMessage(msg_id, done);
     m_connection->listenRead();
 }
 

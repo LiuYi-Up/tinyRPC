@@ -26,7 +26,7 @@ public:
 
     // 异步读取 message
     // 读取成功，将执行 done 函数，函数入参为 message
-    void readMessage(const std::string req_id, std::function<void(AbstractProtocol::s_ptr)> done);
+    void readMessage(const std::string msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
 private:
     NetAddr::s_ptr m_peer_addr;

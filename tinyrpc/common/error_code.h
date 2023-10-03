@@ -20,4 +20,7 @@ const int ERROR_RPC_CALL_TIMEOUT = SYS_ERROR_PREFIX(0007);  // RPC 调用超时
 const int ERROR_SERVICE_NOT_FOUND = SYS_ERROR_PREFIX(0008);  // service 不存在
 const int ERROR_METHOD_NOT_FOUND = SYS_ERROR_PREFIX(0009);  // method 不存在
 const int ERROR_PARSE_SERVICE_NAME = SYS_ERROR_PREFIX(0010);  // 解析 service name 失败
+const int ERROR_RPC_CHANNEL_INIT = SYS_ERROR_PREFIX(0011);  // 解析 service name 失败
+
+
 #endif

@@ -32,7 +32,7 @@ public:
         }
 
         std::shared_ptr<StringProtocol> msg = std::make_shared<StringProtocol>();
-        msg->m_req_id = "12345";
+        msg->m_msg_id = "12345";
         msg->m_info = info;
         out_message.push_back(msg);
         

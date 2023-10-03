@@ -151,20 +151,22 @@ void TcpConnection::onWrite(){
 
 void TcpConnection::excute(){
     if(m_connection_type == TcpConnectionByServer){
-        // 将 rpc 请求执行业务逻辑，获取 rpc 响应， 再把 rpc 响应发送出去
+        
         std::vector<AbstractProtocol::s_ptr> result;
         std::vector<AbstractProtocol::s_ptr> reply_result;
 
         m_coder->decoder(result, m_in_buffer);
+
+        // 将 rpc 请求执行业务逻辑，获取 rpc 响应， 再把 rpc 响应发送出去
         for(size_t i = 0; i < result.size(); ++i){
-            INFOLOG("success request [%s] from client[%s]", result[i]->m_req_id.c_str(), m_peer_addr->toString().c_str());
+            INFOLOG("success request [%s] from client[%s]", result[i]->m_msg_id.c_str(), m_peer_addr->toString().c_str());
             std::shared_ptr<TinyPBProtocol> respones = std::make_shared<TinyPBProtocol>();
-            // respones->m_req_id = result[i]->m_req_id;
-            // respones->m_pb_data = "hello. this is tinyrpc response.";
+            // 在 dispatcher 里面进行 反序列化-执行函数-序列化 的操作流程
             tinyrpc::RpcDispatcher::GetGlobalRpcDispatcher()->dispatch(result[i], respones, this);
             reply_result.emplace_back(respones);
         }
 
+        // 将序列化后的结构体 encoder 为字节流，并写入 out_buffer 中
         m_coder->encoder(reply_result, m_out_buffer);
 
         listenWrite();
@@ -176,7 +178,7 @@ void TcpConnection::excute(){
         m_coder->decoder(results, m_in_buffer);
 
         for(size_t i = 0; i < results.size(); ++i){
-            auto it = m_read_dones.find(results[i]->m_req_id);
+            auto it = m_read_dones.find(results[i]->m_msg_id);
             if(it != m_read_dones.end()){
                 it->second(results[i]);
             }
@@ -241,8 +243,8 @@ void TcpConnection::pushSendMessage(AbstractProtocol::s_ptr message, std::functi
     m_write_dones.push_back({message, done});
 }
 
-void TcpConnection::pushReadMessage(const std::string req_id, std::function<void(AbstractProtocol::s_ptr)> done){
-    m_read_dones.insert({req_id, done});
+void TcpConnection::pushReadMessage(const std::string msg_id, std::function<void(AbstractProtocol::s_ptr)> done){
+    m_read_dones.insert({msg_id, done});
 }
 
 NetAddr::s_ptr TcpConnection::getLocalAddr(){

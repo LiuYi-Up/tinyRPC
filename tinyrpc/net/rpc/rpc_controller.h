@@ -34,9 +34,9 @@ public:
 
     int32_t GetErrorCode();
 
-    void SetReqId(const std::string req_id);
+    void SetMsgId(const std::string msg_id);
 
-    std::string GetReqId();
+    std::string GetMsgId();
 
     void SetLocalAddr(NetAddr::s_ptr addr);
 
@@ -54,7 +54,7 @@ public:
 private:
     int32_t m_error_code {0};
     std::string m_error_info;
-    std::string m_req_id;
+    std::string m_msg_id;
 
     bool m_is_failed {false};
     bool m_is_cancled {false};

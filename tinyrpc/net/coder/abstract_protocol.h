@@ -13,7 +13,7 @@ public:
     virtual ~AbstractProtocol(){}
 
 public:
-    std::string m_req_id; // 标识唯一的请求或者响应函数
+    std::string m_msg_id; // 标识唯一的请求或者响应函数
 };
 
 
