@@ -1,5 +1,5 @@
 #include <string>
-
+#include <unistd.h>
 #include "google/protobuf/service.h"
 
 #include "tinyrpc/net/tcp/net_addr.h"
@@ -18,6 +18,10 @@ public:
                        const ::makeOrderRequest* request,
                        ::makeOrderResponse* response,
                        ::google::protobuf::Closure* done){
+
+        // DEBUGLOG("start sleep 5s");
+        // sleep(5);
+        // DEBUGLOG("end sleep 5s");
 
         if(request->price() < 10){
             response->set_res_code(-1);

@@ -13,7 +13,6 @@
 
 namespace tinyrpc{
 
-
 RpcChannel::RpcChannel(NetAddr::s_ptr peer_addr)
 :m_peer_addr(peer_addr){
     m_client = std::make_shared<TcpClient>(m_peer_addr);
@@ -63,6 +62,18 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     s_ptr channel = shared_from_this();
 
+    m_timer_event = std::make_shared<TimerEvent>(my_controller->GetTimeout(), false, [my_controller, channel]() mutable{
+        my_controller->StartCancel();
+        my_controller->SetError(ERROR_RPC_CALL_TIMEOUT, "rpc call timeout" + std::to_string(my_controller->GetTimeout()));
+
+        if(channel->getClosure()){
+            channel->getClosure()->Run();
+        }
+        channel.reset();
+    });
+
+    m_client->addTimer(m_timer_event);
+
     m_client->connection([req_protocol, channel]() mutable{
         
         RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
@@ -81,6 +92,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
             channel->getClient()->getPeerAddr()->toString().c_str(), 
             channel->getClient()->getLocalAddr()->toString().c_str()); 
 
+
         channel->getClient()->writeMessage(req_protocol, [req_protocol, channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
             INFOLOG("%s | send rpc request success, call method name[%s], peer addr[%s], local addr[%s]",
             req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str(),
@@ -89,9 +101,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
         channel->getClient()->readMessage(req_protocol->m_msg_id, [channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
             std::shared_ptr<tinyrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<tinyrpc::TinyPBProtocol>(msg);
+
             INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]",
             rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
             channel->getClient()->getPeerAddr()->toString().c_str(), channel->getClient()->getLocalAddr()->toString().c_str());
+
+            channel->getTimerEvent()->setCancled(true);
 
             if(!channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data)){
                 ERRORLOG("%s | deserialize failed.", rsp_protocol->m_msg_id.c_str());
@@ -105,6 +120,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                 rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
                 return;
             }
+
 
             if(channel->getClosure()){
                 channel->getClosure()->Run();
@@ -144,6 +160,10 @@ google::protobuf::Closure* RpcChannel::getClosure(){
 
 TcpClient* RpcChannel::getClient(){
     return m_client.get();
+}
+
+TimerEvent* RpcChannel::getTimerEvent(){
+    return m_timer_event.get();
 }
 
 

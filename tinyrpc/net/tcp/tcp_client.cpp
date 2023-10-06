@@ -147,4 +147,9 @@ std::string TcpClient::getConnectErrorInfo(){
     return m_connect_error_info;
 }
 
+void TcpClient::addTimer(TimerEvent::s_ptr timer_event){
+    m_event_loop->addTimerEvent(timer_event);
+}
+
+
 }

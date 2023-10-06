@@ -7,6 +7,7 @@
 #include "tinyrpc/net/coder/abstract_protocol.h"
 #include "tinyrpc/net/tcp/net_addr.h"
 #include "tinyrpc/net/tcp/tcp_connection.h"
+#include "tinyrpc/net/timer_event.h"
 
 namespace tinyrpc{
 
@@ -40,6 +41,8 @@ public:
     int getConnectErrorCode();
 
     std::string getConnectErrorInfo();
+
+    void addTimer(TimerEvent::s_ptr timer_event);
 
 private:
     NetAddr::s_ptr m_peer_addr;
