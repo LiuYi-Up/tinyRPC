@@ -16,11 +16,11 @@ namespace tinyrpc{
 
 RpcChannel::RpcChannel(NetAddr::s_ptr peer_addr)
 :m_peer_addr(peer_addr){
-    
+    m_client = std::make_shared<TcpClient>(m_peer_addr);
 }
 
 RpcChannel::~RpcChannel(){
-
+    INFOLOG("~RpcChannel");
 }
 
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
@@ -29,18 +29,18 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     std::shared_ptr<tinyrpc::TinyPBProtocol> req_protocol = std:: make_shared<tinyrpc::TinyPBProtocol>();
     
-    RpcController* my_controler = dynamic_cast<RpcController*>(controller);
-    if(my_controler == nullptr){
+    RpcController* my_controller = dynamic_cast<RpcController*>(controller);
+    if(my_controller == nullptr){
         ERRORLOG("failed callmethod, RpcController convert error");
         return;
     }
 
-    if(my_controler->GetMsgId().empty()){
+    if(my_controller->GetMsgId().empty()){
         req_protocol->m_msg_id = MsgIdUtil::GetMsgId();
-        my_controler->SetMsgId(req_protocol->m_msg_id);
+        my_controller->SetMsgId(req_protocol->m_msg_id);
     }
     else{
-        req_protocol->m_msg_id = my_controler->GetMsgId();
+        req_protocol->m_msg_id = my_controller->GetMsgId();
     }
 
     req_protocol->m_method_name = method->full_name();
@@ -48,7 +48,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     if(!m_is_init){
         std::string err_info = "RpcChannel not init";
-        my_controler->SetError(ERROR_RPC_CHANNEL_INIT, err_info);
+        my_controller->SetError(ERROR_RPC_CHANNEL_INIT, err_info);
         ERRORLOG("%s | %s", req_protocol->m_msg_id.c_str(), err_info.c_str());
         return;
     }
@@ -56,28 +56,43 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     // req 序列化
     if(!request->SerializeToString(&(req_protocol->m_pb_data))){
         std::string err_info = "failed to serialize";
-        my_controler->SetError(ERROR_FAILED_SERIALIZE, err_info);
+        my_controller->SetError(ERROR_FAILED_SERIALIZE, err_info);
         ERRORLOG("%s | %s, origin request [%s]", req_protocol->m_msg_id.c_str(), err_info.c_str(), request->ShortDebugString().c_str());
         return;
     }
 
     s_ptr channel = shared_from_this();
 
-    TcpClient client(m_peer_addr);
+    m_client->connection([req_protocol, channel]() mutable{
+        
+        RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
 
-    client.connection([&client, req_protocol, channel]() mutable{
+        if(channel->getClient()->getConnectErrorCode() != 0){
+            my_controller->SetError(channel->getClient()->getConnectErrorCode(), channel->getClient()->getConnectErrorInfo());
+            ERRORLOG("%s | connect error, error code[%d], error info[%s], peer addr[%s]",
+            req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
+            my_controller->GetErrorInfo().c_str(), channel->getClient()->getPeerAddr()->toString().c_str());
 
-        client.writeMessage(req_protocol, [&client, req_protocol, channel](AbstractProtocol::s_ptr msg) mutable{
-            INFOLOG("%s | send rpc request success, call method name[%s]",
-            req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str());
+            return;
+        }
+
+        INFOLOG("%s | connect success, peer addr[%s], local addr[%s]",
+            req_protocol->m_msg_id.c_str(), 
+            channel->getClient()->getPeerAddr()->toString().c_str(), 
+            channel->getClient()->getLocalAddr()->toString().c_str()); 
+
+        channel->getClient()->writeMessage(req_protocol, [req_protocol, channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
+            INFOLOG("%s | send rpc request success, call method name[%s], peer addr[%s], local addr[%s]",
+            req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str(),
+            channel->getClient()->getPeerAddr()->toString().c_str(), channel->getClient()->getLocalAddr()->toString().c_str());
         });
 
-        client.readMessage(req_protocol->m_msg_id, [channel](AbstractProtocol::s_ptr msg) mutable{
+        channel->getClient()->readMessage(req_protocol->m_msg_id, [channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
             std::shared_ptr<tinyrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<tinyrpc::TinyPBProtocol>(msg);
-            INFOLOG("%s | success get rpc response, call method name[%s]",
-            rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str());
+            INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]",
+            rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+            channel->getClient()->getPeerAddr()->toString().c_str(), channel->getClient()->getLocalAddr()->toString().c_str());
 
-            RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
             if(!channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data)){
                 ERRORLOG("%s | deserialize failed.", rsp_protocol->m_msg_id.c_str());
                 my_controller->SetError(ERROR_PARSE_SERVICE_NAME, "parse error");
@@ -126,5 +141,10 @@ google::protobuf::Message* RpcChannel::getResponse(){
 google::protobuf::Closure* RpcChannel::getClosure(){
     return m_closure.get();
 }
+
+TcpClient* RpcChannel::getClient(){
+    return m_client.get();
+}
+
 
 }

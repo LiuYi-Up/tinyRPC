@@ -140,6 +140,14 @@ void EventLoop::loop(){
                     addTask(fd_event->handler(FdEvent::OUT_EVENT));
                 }
 
+                if(trigger_event.events & EPOLLERR){
+                    deleteEpollEvent(fd_event);
+                    if(fd_event->handler(FdEvent::ERROR_EVENT) != nullptr){
+                        DEBUGLOG("fd %d add error callback", fd_event->getFd());
+                        addTask(fd_event->handler(FdEvent::OUT_EVENT));
+                    }
+                }
+
             }
         }
     }
@@ -150,7 +158,8 @@ void EventLoop::wakeup(){
 }
 
 void EventLoop::stop(){
-
+    m_is_stop = true;
+    wakeup();
 
 }
 

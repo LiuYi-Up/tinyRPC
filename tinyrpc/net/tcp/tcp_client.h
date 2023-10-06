@@ -1,7 +1,7 @@
 #ifndef TINYRPC_NET_TCP_TCP_CLIENT_H
 #define TINYRPC_NET_TCP_TCP_CLIENT_H
 
-
+#include <memory>
 
 #include "tinyrpc/net/fd_event.h"
 #include "tinyrpc/net/coder/abstract_protocol.h"
@@ -13,6 +13,8 @@ namespace tinyrpc{
 
 class TcpClient{
 public:
+    typedef std::shared_ptr<TcpClient> s_ptr;
+
     TcpClient(NetAddr::s_ptr peer_addr);
     ~TcpClient();
 
@@ -28,14 +30,30 @@ public:
     // 读取成功，将执行 done 函数，函数入参为 message
     void readMessage(const std::string msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
+    void stop();
+
+    NetAddr* getPeerAddr();
+    NetAddr* getLocalAddr();
+
+    void initLocalAddr();
+
+    int getConnectErrorCode();
+
+    std::string getConnectErrorInfo();
+
 private:
     NetAddr::s_ptr m_peer_addr;
+    NetAddr::s_ptr m_local_addr;
     EventLoop* m_event_loop {nullptr};
 
     int m_fd {-1};
     FdEvent* m_fd_event {nullptr};
 
     TcpConnection::s_ptr m_connection;
+
+    int m_connect_error_code {0};
+    std::string m_connect_error_info;
+
 
 };
 

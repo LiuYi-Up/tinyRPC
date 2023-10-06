@@ -80,8 +80,10 @@ void test_rpc_channel(){
     std::shared_ptr<tinyrpc::RpcController> controller = std::make_shared<tinyrpc::RpcController>();
     controller->SetMsgId("99998888");
 
-    std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>([request, response](){
+    std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>([request, response, channel]() mutable{
         INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
+        channel->getClient()->stop();
+        channel.reset();
     });
 
     channel->Init(controller, request, response, closure);
@@ -98,5 +100,7 @@ int main(){
     tinyrpc::Logger::InitGlobalLogger();
 
     test_rpc_channel();
+
+    DEBUGLOG("end rpc client");
     return 0;
 }

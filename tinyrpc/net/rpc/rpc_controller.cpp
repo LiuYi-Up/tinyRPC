@@ -52,6 +52,10 @@ int32_t RpcController::GetErrorCode(){
     return m_error_code;
 }
 
+std::string RpcController::GetErrorInfo(){
+    return m_error_info;
+}
+
 void RpcController::SetMsgId(const std::string msg_id){
     m_msg_id = msg_id;
 }

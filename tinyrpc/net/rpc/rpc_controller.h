@@ -34,6 +34,8 @@ public:
 
     int32_t GetErrorCode();
 
+    std::string GetErrorInfo();
+
     void SetMsgId(const std::string msg_id);
 
     std::string GetMsgId();

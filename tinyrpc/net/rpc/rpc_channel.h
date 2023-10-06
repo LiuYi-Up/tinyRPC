@@ -6,6 +6,7 @@
 #include "google/protobuf/service.h"
 
 #include "tinyrpc/net/tcp/net_addr.h"
+#include "tinyrpc/net/tcp/tcp_client.h"
 
 namespace tinyrpc{
 
@@ -34,6 +35,8 @@ public:
 
     google::protobuf::Closure* getClosure();
 
+    TcpClient* getClient();
+
 private:
 
     NetAddr::s_ptr m_peer_addr {nullptr};
@@ -45,6 +48,8 @@ private:
     closure_s_ptr m_closure {nullptr};
 
     bool m_is_init {false};
+
+    TcpClient::s_ptr m_client {nullptr};
 };
 
 }
