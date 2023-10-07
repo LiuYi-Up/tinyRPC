@@ -2,6 +2,7 @@
 #include "tinyrpc/net/tcp/tcp_connection.h"
 #include "tinyrpc/net/tcp/tcp_server.h"
 #include "tinyrpc/common/log.h"
+#include "tinyrpc/common/config.h"
 
 
 #include <memory>
@@ -38,7 +39,7 @@ void TcpServer::init(){
 
     m_acceptor = std::make_shared<TcpAcceptor>(m_local_addr);
     m_main_event_loop = EventLoop::getCurEventLoop();
-    m_io_thread_groups = new IOThreadGroup(2);
+    m_io_thread_groups = new IOThreadGroup(Config::GetGlobalConfig()->m_io_threads);
 
     m_listen_fd_event = new FdEvent(m_acceptor->getListenFd());
     m_listen_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
@@ -46,7 +47,7 @@ void TcpServer::init(){
     DEBUGLOG("Tcp server fd [%d].", m_listen_fd_event->getFd());
     m_main_event_loop->addEpollEvent(m_listen_fd_event);
 
-    INFOLOG("rocket TcpServer success on [%s]", m_local_addr->toString().c_str());
+    INFOLOG("tinyrpc TcpServer success on [%s]", m_local_addr->toString().c_str());
 
 }
 

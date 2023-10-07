@@ -29,7 +29,7 @@ public:
             return;
         }
         response->set_order_id("123321");
-        APPDEBUGLOG("callc rpc success");
+        APPDEBUGLOG("call rpc success");
 
         return;
     }
@@ -56,6 +56,12 @@ int main(){
     std::shared_ptr<OrderImpl> service = std::make_shared<OrderImpl>();
     tinyrpc::RpcDispatcher::GetGlobalRpcDispatcher()->registerService(service);
 
-    test_tcp_server();
+    tinyrpc::IPNetAddr::s_ptr addr = std::make_shared<tinyrpc::IPNetAddr>("127.0.0.1", 12344);
+
+    DEBUGLOG("creat addr %s", addr->toString().c_str());
+
+    tinyrpc::TcpServer tcp_server(addr);
+
+    tcp_server.start();
 
 }

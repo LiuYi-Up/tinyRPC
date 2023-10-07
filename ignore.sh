@@ -1,1 +1,1 @@
-git reset obj/* lib/* bin/*
+git reset obj/* lib/* bin/* log/*

@@ -81,7 +81,7 @@ void test_rpc_channel(){
     controller->SetMsgId("99998888");
     controller->SetTimeout(10000);
 
-    std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>([request, response, channel, controller]() mutable{
+    std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>(nullptr, [request, response, channel, controller]() mutable{
         if(controller->GetErrorCode() == 0){
             INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
         }
@@ -116,7 +116,7 @@ void test_rpc_call(){
     controller->SetMsgId("99998888");
     controller->SetTimeout(10000);
 
-    std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>([request, response, channel, controller]() mutable{
+    std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>(nullptr, [request, response, channel, controller]() mutable{
         if(controller->GetErrorCode() == 0){
             INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
             printf("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
@@ -135,8 +135,8 @@ void test_rpc_call(){
 }
 
 int main(){
-    tinyrpc::Config::SetGlobalConfig("./conf/tinyrpc_client.xml");
-    tinyrpc::Logger::InitGlobalLogger();
+    tinyrpc::Config::SetGlobalConfig(NULL);
+    tinyrpc::Logger::InitGlobalLogger(0);
 
     test_rpc_call();
     // test_rpc_channel();

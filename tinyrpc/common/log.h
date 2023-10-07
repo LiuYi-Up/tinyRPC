@@ -143,11 +143,11 @@ public:
 
 public:
     static Logger* GetGlobalLogger();
-    static void InitGlobalLogger();
+    static void InitGlobalLogger(int type = 1);
 
 private:
     LogLevel m_set_level;
-    int m_type;  // 0 打印到终端，1 打印到文件
+    int m_type;  // 0 同步打印到终端，1 异步打印到文件
     std::vector<std::string> m_buffer;
     std::vector<std::string> m_app_buffer;
 

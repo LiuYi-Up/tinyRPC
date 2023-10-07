@@ -48,10 +48,10 @@ Logger* Logger::GetGlobalLogger(){
     return g_logger;
 }
 
-void Logger::InitGlobalLogger(){
+void Logger::InitGlobalLogger(int type /*=1*/){
     std::string log_level_str = Config::GetGlobalConfig()->m_log_level;
     LogLevel log_level = StringToLogLvel(Config::GetGlobalConfig()->m_log_level);
-    g_logger = new Logger(log_level);
+    g_logger = new Logger(log_level, type);
     g_logger->init();
 }
 
@@ -79,7 +79,7 @@ void Logger::init(){
         return;
     }
 
-    m_timer_event = std::make_shared<TimerEvent>(Config::GetGlobalConfig()->m_log_sync_inteval, true, std::bind(&Logger::syncLoop, this));
+    m_timer_event = std::make_shared<TimerEvent>(Config::GetGlobalConfig()->m_log_sync_interval, true, std::bind(&Logger::syncLoop, this));
     EventLoop::getCurEventLoop()->addTimerEvent(m_timer_event);
 }
 

@@ -1,7 +1,6 @@
 #include "tinyrpc/common/run_time.h"
 
 
-
 namespace tinyrpc{
 
 thread_local RunTime* t_run_time = NULL;
@@ -12,6 +11,10 @@ RunTime* RunTime::GetRunTime(){
     }
     t_run_time = new RunTime();
     return t_run_time;
+}
+
+RpcInterface* RunTime::getRpcInterface(){
+    return m_rpc_interface;
 }
 
 

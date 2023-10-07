@@ -21,8 +21,10 @@ public:
     std::string m_log_file_name;
     std::string m_log_file_path;
     int m_log_max_file_size;
-    int m_log_sync_inteval {0};  // 日志时间间隔， ms
+    int m_log_sync_interval {0};  // 日志时间间隔， ms
 
+    int m_port;
+    int m_io_threads;
 };
 
 
