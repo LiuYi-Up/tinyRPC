@@ -120,7 +120,7 @@ void TcpConnection::onWrite(){
         int write_count = m_out_buffer->readAble();
         int read_index = m_out_buffer->readIndex();
 
-        int rt = write(m_fd, &m_out_buffer->m_buffer[read_index], write_count);
+        int rt = write(m_fd, &(m_out_buffer->m_buffer[read_index]), write_count);
         if(rt >= write_count){
             DEBUGLOG("no data need to send to client [%s]", m_peer_addr->toString().c_str());
             is_write_all = true;

@@ -6,14 +6,14 @@
 namespace tinyrpc{
 
 template<class T>
-class ScoprMutex{
+class ScopeMutex{
 public:
-    ScoprMutex(T& mutex)
+    ScopeMutex(T& mutex)
     :m_mutex(mutex) {
         m_mutex.lock();
         m_is_lock = true;
     }
-    ~ScoprMutex(){
+    ~ScopeMutex(){
         m_mutex.unlock();
         m_is_lock = false;
     }

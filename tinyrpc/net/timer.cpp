@@ -30,7 +30,7 @@ Timer::~Timer(){
 void Timer::addTimerEvent(TimerEvent::s_ptr event){
     bool is_reset_timerfd = false;
 
-    ScoprMutex<Mutex> lk(m_mutex);
+    ScopeMutex<Mutex> lk(m_mutex);
     if(m_pending_tasks.empty()){
         // 如果定时任务队列为空，重置 Timer
         is_reset_timerfd = true;
@@ -56,7 +56,7 @@ void Timer::addTimerEvent(TimerEvent::s_ptr event){
 void Timer::deleteTimerEvent(TimerEvent::s_ptr event){
     event->setCancled(true);
 
-    ScoprMutex<Mutex> lk(m_mutex);
+    ScopeMutex<Mutex> lk(m_mutex);
 
     auto begin = m_pending_tasks.lower_bound(event->getArriveTime());
     auto end = m_pending_tasks.upper_bound(event->getArriveTime());
@@ -92,7 +92,7 @@ void Timer::onTimer(){
     std::vector<TimerEvent::s_ptr> event_tmps;
     std::vector<std::function<void()>> tasks_tmps;
 
-    ScoprMutex<Mutex> lk(m_mutex);
+    ScopeMutex<Mutex> lk(m_mutex);
     auto it = m_pending_tasks.begin();
 
     for(it = m_pending_tasks.begin(); it != m_pending_tasks.end(); ++it){
@@ -131,7 +131,7 @@ void Timer::onTimer(){
 }
 
 void Timer::resetArriveTime(){
-    ScoprMutex<Mutex> lk(m_mutex);
+    ScopeMutex<Mutex> lk(m_mutex);
     auto tmp = m_pending_tasks;
     lk.unlock();
 

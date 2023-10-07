@@ -19,9 +19,9 @@ public:
                        ::makeOrderResponse* response,
                        ::google::protobuf::Closure* done){
 
-        // DEBUGLOG("start sleep 5s");
-        // sleep(5);
-        // DEBUGLOG("end sleep 5s");
+        APPDEBUGLOG("start sleep 5s");
+        sleep(3);
+        APPDEBUGLOG("end sleep 5s");
 
         if(request->price() < 10){
             response->set_res_code(-1);
@@ -29,6 +29,8 @@ public:
             return;
         }
         response->set_order_id("123321");
+        APPDEBUGLOG("callc rpc success");
+
         return;
     }
 };

@@ -33,7 +33,7 @@ FdEventGroup::~FdEventGroup(){
 
 
 FdEvent* FdEventGroup::getFdEvent(int fd){
-    ScoprMutex<Mutex> lk(m_mutex);
+    ScopeMutex<Mutex> lk(m_mutex);
 
     if((size_t) fd < m_fd_event_group.size()){
         return m_fd_event_group[fd];

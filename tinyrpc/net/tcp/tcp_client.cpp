@@ -37,23 +37,22 @@ TcpClient::~TcpClient(){
 void TcpClient::connection(std::function<void()> done){
     int rt = ::connect(m_fd, m_peer_addr->getSockAddr(), m_peer_addr->getSockLen());
     if(rt == 0){
-        DEBUGLOG("connect [%s] success", m_peer_addr->toString());
+        DEBUGLOG("connect [%s] success", m_peer_addr->toString().c_str());
+        m_connection->setState(Connected);
         initLocalAddr();
         if(done){
             done();
         }
     }
-    else{
+    else if(rt == -1){
         if(errno == EINPROGRESS){
             // epoll 监听可写事件， 然后判断错误码
             m_fd_event->listen(FdEvent::OUT_EVENT, 
                 [this, done](){
-                    int error = 0;
-                    socklen_t error_len = sizeof(error);
-                    getsockopt(m_fd, SOL_SOCKET, SO_ERROR, &error, &error_len);
-                    initLocalAddr();
-                    if(error == 0){
+                    int rt = ::connect(m_fd, m_peer_addr->getSockAddr(), m_peer_addr->getSockLen());
+                    if((rt < 0 && errno == EISCONN) || (rt == 0)){
                         DEBUGLOG("connect [%s] success", m_peer_addr->toString().c_str());
+                        initLocalAddr();
                         m_connection->setState(Connected);
                     }
                     else{
@@ -88,6 +87,9 @@ void TcpClient::connection(std::function<void()> done){
             m_connect_error_code = ERROR_FAILED_CONNECT;
             m_connect_error_info = "connect failed, error=" + std::string(strerror(errno));
             ERRORLOG("connect failed, errno=%d, error=%s", errno, strerror(errno));
+            if(done){
+                done();
+            }
         }
     }
 }

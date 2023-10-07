@@ -20,7 +20,7 @@ int TCPBuffer::readAble(){
 }
 
 int TCPBuffer::writeAble(){
-    return m_size - m_write_index;
+    return m_buffer.size() - m_write_index;
 }
 
 int TCPBuffer::writeIndex(){
@@ -65,11 +65,11 @@ void TCPBuffer::adjustBuffer(){
     当都不已读取的空间超过总容量的1/3，则将后续没读取的移到头部
     避免数组扩容内存泄漏
     */
-    if(m_read_index < m_size / 3){
+    if(m_read_index < int(m_buffer.size()) / 3){
         return;
     }
 
-    std::vector<char> tmp(m_size);
+    std::vector<char> tmp(m_buffer.size());
     int count = readAble();
     memcpy(&tmp[0], &m_buffer[m_read_index], count);
 
@@ -95,23 +95,22 @@ void TCPBuffer::resizeBuffer(int size){
     m_read_index = 0;
     m_write_index = m_read_index + count;
 
-    m_size = size;
 }
 
 void TCPBuffer::moveReadIndex(int size){
     int new_index = m_read_index + size;
-    if(new_index > m_size){
-        ERRORLOG("move read index error, invalid size %d, old index %d, buffer size %d", size, m_read_index, m_size);
+    if(new_index >= m_buffer.size()){
+        ERRORLOG("move read index error, invalid size %d, old index %d, buffer size %d", size, m_read_index, m_buffer.size());
         return;
     }
-    m_read_index += size;
+    m_read_index = new_index;
     adjustBuffer();
 }
 
 void TCPBuffer::moveWriteIndex(int size){
     int new_index = m_write_index + size;
-    if(new_index > m_size){
-        ERRORLOG("move write index error, invalid size %d, old index %d, buffer size %d", size, m_write_index, m_size);
+    if(new_index > m_buffer.size()){
+        ERRORLOG("move write index error, invalid size %d, old index %d, buffer size %d", size, m_write_index, m_buffer.size());
         return;
     }
     m_write_index += size;

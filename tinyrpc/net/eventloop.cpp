@@ -100,7 +100,7 @@ void EventLoop::initTimer(){
 void EventLoop::loop(){
     m_is_looping = true;
     while(!m_is_stop){
-        ScoprMutex<Mutex> lock(m_mutex);
+        ScopeMutex<Mutex> lock(m_mutex);
         std::queue<std::function<void()>> tmp_tasks;
         m_pending_tasks.swap(tmp_tasks);
         lock.unlock();
@@ -221,7 +221,7 @@ void EventLoop::dealwakeup(){
 }
 
 void EventLoop::addTask(std::function<void()> cb, bool is_wakeup /*=false*/){
-    ScoprMutex<Mutex> lock(m_mutex);
+    ScopeMutex<Mutex> lock(m_mutex);
     m_pending_tasks.push(cb);
     lock.unlock();
 

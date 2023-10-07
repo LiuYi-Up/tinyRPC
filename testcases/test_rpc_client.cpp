@@ -104,19 +104,14 @@ void test_rpc_channel(){
 }
 
 void test_rpc_call(){
-    // tinyrpc::IPNetAddr::s_ptr addr = std::make_shared<tinyrpc::IPNetAddr>("127.0.0.1", 12344);
-    // std::shared_ptr<tinyrpc::RpcChannel> channel = std::make_shared<tinyrpc::RpcChannel>(addr);
     NEWRPCCHANNEL("127.0.0.1:12344", channel);
 
-    // std::shared_ptr<makeOrderRequest> request = std::make_shared<makeOrderRequest>();
     NEWMESSAGE(makeOrderRequest, request);
     request->set_price(100);
     request->set_good("apple");
     
-    // std::shared_ptr<makeOrderResponse> response = std::make_shared<makeOrderResponse>();
     NEWMESSAGE(makeOrderResponse, response);
 
-    // std::shared_ptr<tinyrpc::RpcController> controller = std::make_shared<tinyrpc::RpcController>();
     NEWRPCCONTROLLER(controller);
     controller->SetMsgId("99998888");
     controller->SetTimeout(10000);
@@ -124,6 +119,7 @@ void test_rpc_call(){
     std::shared_ptr<tinyrpc::RpcClosure> closure = std::make_shared<tinyrpc::RpcClosure>([request, response, channel, controller]() mutable{
         if(controller->GetErrorCode() == 0){
             INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
+            printf("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
         }
         else{
             INFOLOG("call rpc failed, error code=%d, error info=%s",
@@ -131,21 +127,19 @@ void test_rpc_call(){
                 controller->GetErrorInfo().c_str()
             )
         }
-        channel->getClient()->stop();
+        // channel->getClient()->stop();
         channel.reset();
     });
 
-    // channel->Init(controller, request, response, closure);
-    // Order_Stub stub(channel.get());
-    // stub.makeOrder(controller.get(), request.get(), response.get(), closure.get());
     CALLRPC("127.0.0.1:12344", Order_Stub, makeOrder,controller, request, response, closure);
 }
 
 int main(){
-    tinyrpc::Config::SetGlobalConfig("./conf/tinyrpc.xml");
+    tinyrpc::Config::SetGlobalConfig("./conf/tinyrpc_client.xml");
     tinyrpc::Logger::InitGlobalLogger();
 
-    test_rpc_channel();
+    test_rpc_call();
+    // test_rpc_channel();
 
     DEBUGLOG("end rpc client");
     return 0;

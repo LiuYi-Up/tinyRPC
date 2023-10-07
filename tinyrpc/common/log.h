@@ -5,8 +5,11 @@
 #include <memory>
 #include <queue>
 #include <vector>
-#include "tinyrpc/common/mutex.h"
+#include <queue>
+#include <semaphore.h>
 
+#include "tinyrpc/common/mutex.h"
+#include "tinyrpc/net/timer_event.h"
 
 namespace tinyrpc{
 
@@ -28,7 +31,6 @@ std::string formatString(const char* str, Args&&... args){
         std::string debug_msg = tinyrpc::LogEvent(tinyrpc::LogLevel::Debug).toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
         debug_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
         tinyrpc::Logger::GetGlobalLogger()->pushLog(debug_msg); \
-        tinyrpc::Logger::GetGlobalLogger()->log(); \
     } \
 
 #define INFOLOG(str, ...) \
@@ -36,7 +38,6 @@ std::string formatString(const char* str, Args&&... args){
         std::string info_msg = tinyrpc::LogEvent(tinyrpc::LogLevel::Info).toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
         info_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
         tinyrpc::Logger::GetGlobalLogger()->pushLog(info_msg); \
-        tinyrpc::Logger::GetGlobalLogger()->log(); \
     } \
     
 
@@ -45,7 +46,29 @@ std::string formatString(const char* str, Args&&... args){
         std::string error_msg = tinyrpc::LogEvent(tinyrpc::LogLevel::Error).toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
         error_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
         tinyrpc::Logger::GetGlobalLogger()->pushLog(error_msg); \
-        tinyrpc::Logger::GetGlobalLogger()->log(); \
+    } \
+
+
+#define APPDEBUGLOG(str, ...) \
+    if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() && tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Debug){ \
+        std::string debug_msg = tinyrpc::LogEvent(tinyrpc::LogLevel::Debug).toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
+        debug_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
+        tinyrpc::Logger::GetGlobalLogger()->pushAppLog(debug_msg); \
+    } \
+
+#define APPINFOLOG(str, ...) \
+    if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Info){ \
+        std::string info_msg = tinyrpc::LogEvent(tinyrpc::LogLevel::Info).toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
+        info_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
+        tinyrpc::Logger::GetGlobalLogger()->pushAppLog(info_msg); \
+    } \
+    
+
+#define APPERRORLOG(str, ...) \
+    if(tinyrpc::Logger::GetGlobalLogger()->getLogLevel() <= tinyrpc::Error){ \
+        std::string error_msg = tinyrpc::LogEvent(tinyrpc::LogLevel::Error).toString() + tinyrpc::formatString(str, ##__VA_ARGS__); \
+        error_msg += " [" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + "\n"; \
+        tinyrpc::Logger::GetGlobalLogger()->pushAppLog(error_msg); \
     } \
 
 
@@ -56,15 +79,59 @@ enum LogLevel{
     Error = 3
 };
 
+
+class AsyncLogger{
+public:
+    typedef std::shared_ptr<AsyncLogger> s_ptr;
+
+    AsyncLogger(const std::string& file_name, const std::string& file_path, const int max_size);
+
+    void stop();
+
+    void flush();
+
+    void pushLogBuffer(std::vector<std::string>& vec);
+
+public:
+    static void* Loop(void* arg);
+
+
+public:
+    pthread_t m_thread;
+
+private:
+    std::queue<std::vector<std::string>> m_buffer;
+
+    std::string m_file_name;
+    std::string m_file_path;
+
+    int m_max_file_size {0};
+
+    sem_t m_sempahore;
+
+    pthread_cond_t m_condition;
+    Mutex m_mutex;
+
+    std::string m_date;
+    FILE* m_file_handler {NULL};
+
+    bool m_reopen_flag {false};
+    int m_no {};
+    bool m_stop_flag {false};
+};
+
+
 class Logger{
 public:
     typedef std::shared_ptr<Logger> s_ptr;  // 为啥要用共享指针？
 
-    Logger(LogLevel log_level);
+    Logger(LogLevel log_level, int type=1);
+
+    void init();
 
     void pushLog(const std::string& msg);
 
-    // void init();
+    void pushAppLog(const std::string& msg);
 
     void log();
 
@@ -72,18 +139,25 @@ public:
         return m_set_level;
     }
 
+    void syncLoop();
+
 public:
     static Logger* GetGlobalLogger();
     static void InitGlobalLogger();
 
 private:
     LogLevel m_set_level;
-    std::queue<std::string> m_buffer;
+    int m_type;  // 0 打印到终端，1 打印到文件
+    std::vector<std::string> m_buffer;
     std::vector<std::string> m_app_buffer;
 
     Mutex m_mutex;
+    Mutex m_app_mutex;
     
+    AsyncLogger::s_ptr m_async_logger;
+    AsyncLogger::s_ptr m_async_app_logger;
 
+    TimerEvent::s_ptr m_timer_event;
 };
 
 class LogEvent{

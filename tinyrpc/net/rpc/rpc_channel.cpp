@@ -92,40 +92,40 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
             channel->getClient()->getPeerAddr()->toString().c_str(), 
             channel->getClient()->getLocalAddr()->toString().c_str()); 
 
-
         channel->getClient()->writeMessage(req_protocol, [req_protocol, channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
             INFOLOG("%s | send rpc request success, call method name[%s], peer addr[%s], local addr[%s]",
             req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str(),
-            channel->getClient()->getPeerAddr()->toString().c_str(), channel->getClient()->getLocalAddr()->toString().c_str());
-        });
+            channel->getClient()->getPeerAddr()->toString().c_str(), 
+            channel->getClient()->getLocalAddr()->toString().c_str());
 
-        channel->getClient()->readMessage(req_protocol->m_msg_id, [channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
-            std::shared_ptr<tinyrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<tinyrpc::TinyPBProtocol>(msg);
+            channel->getClient()->readMessage(req_protocol->m_msg_id, [channel, my_controller](AbstractProtocol::s_ptr msg) mutable{
+                std::shared_ptr<tinyrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<tinyrpc::TinyPBProtocol>(msg);
 
-            INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]",
-            rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
-            channel->getClient()->getPeerAddr()->toString().c_str(), channel->getClient()->getLocalAddr()->toString().c_str());
-
-            channel->getTimerEvent()->setCancled(true);
-
-            if(!channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data)){
-                ERRORLOG("%s | deserialize failed.", rsp_protocol->m_msg_id.c_str());
-                my_controller->SetError(ERROR_PARSE_SERVICE_NAME, "parse error");
-                return;
-            }
-
-            if(rsp_protocol->m_err_code != 0){
-                ERRORLOG("%s | call rpc method[%s] failed, error code[%d], error ifo[%s]",
+                INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]",
                 rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
-                rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
-                return;
-            }
+                channel->getClient()->getPeerAddr()->toString().c_str(), channel->getClient()->getLocalAddr()->toString().c_str());
+
+                channel->getTimerEvent()->setCancled(true);
+
+                if(!channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data)){
+                    ERRORLOG("%s | deserialize failed.", rsp_protocol->m_msg_id.c_str());
+                    my_controller->SetError(ERROR_PARSE_SERVICE_NAME, "parse error");
+                    return;
+                }
+
+                if(rsp_protocol->m_err_code != 0){
+                    ERRORLOG("%s | call rpc method[%s] failed, error code[%d], error ifo[%s]",
+                    rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+                    rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
+                    return;
+                }
 
 
-            if(channel->getClosure()){
-                channel->getClosure()->Run();
-            }
-            channel.reset();
+                if(channel->getClosure()){
+                    channel->getClosure()->Run();
+                }
+                channel.reset();
+            });
         });
     });
 }

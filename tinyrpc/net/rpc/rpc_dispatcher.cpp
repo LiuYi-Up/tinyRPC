@@ -1,6 +1,7 @@
 #include "tinyrpc/net/rpc/rpc_dispatcher.h"
 #include "tinyrpc/common/log.h"
 #include "tinyrpc/common/error_code.h"
+#include "tinyrpc/common/run_time.h"
 #include "tinyrpc/net/coder/tinypb_protocol.h"
 #include "tinyrpc/net/rpc/rpc_controller.h"
 #include "tinyrpc/net/tcp/net_addr.h"
@@ -76,6 +77,9 @@ void RpcDispatcher::dispatch(AbstractProtocol::s_ptr request, AbstractProtocol::
     rpc_controller.SetLocalAddr(connection->getLocalAddr());
     rpc_controller.SetPeerAddr(connection->getPeerAddr());
     rpc_controller.SetMsgId(req_protocol->m_msg_id);
+
+    RunTime::GetRunTime()->m_msg_id = req_protocol->m_msg_id;
+    RunTime::GetRunTime()->m_method_name = method_name;
 
     // 实例化 response type 对象
     google::protobuf::Message* rps_msg = service->GetResponsePrototype(method).New();
